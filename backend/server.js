@@ -16,6 +16,12 @@ const io = new Server(server, {
 });
 const PORT = process.env.PORT || 5500;
 
+const cors = require("cors");
+
+app.use(cors({
+  origin: "https://your-netlify-site.netlify.app"
+}));
+
 // Store active socket connections
 const userSockets = {}; // userId -> socket.id
 const adminSockets = {}; // userId -> set of admin socket ids
