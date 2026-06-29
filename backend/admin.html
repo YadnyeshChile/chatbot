@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' http://localhost:5500 http://127.0.0.1:5500 ws://localhost:5500 ws://127.0.0.1:5500; script-src 'self' 'unsafe-inline' https://cdn.socket.io; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <title>Chatbot Admin Panel</title>
+    <link rel="stylesheet" href="admin-style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .admin-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+
+        .sidebar {
+            width: 250px;
+            min-width: 200px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            overflow-y: auto;
+        }
+
+        .sidebar-header h2 {
+            font-size: clamp(18px, 5vw, 24px);
+            margin-bottom: 20px;
+            text-align: center;
+            word-break: break-word;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .nav-item {
+            padding: 10px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: clamp(12px, 2.5vw, 14px);
+            font-weight: 500;
+            transition: all 0.3s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(3px);
+        }
+
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: clamp(15px, 3vw, 30px);
+            min-width: 0;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .tab-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .tab-header h1 {
+            font-size: clamp(20px, 5vw, 28px);
+            color: #333;
+            min-width: 0;
+            flex-shrink: 0;
+        }
+
+        .btn-primary, .btn-secondary, .btn-success, .btn-danger {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: clamp(12px, 2vw, 14px);
+            white-space: nowrap;
+            min-width: max-content;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-success {
+            background: #51cf66;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #40c057;
+        }
+
+        .btn-danger {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #ff5252;
+        }
+
+        .form-container {
+            background: white;
+            padding: clamp(15px, 2vw, 20px);
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+            font-size: clamp(12px, 2vw, 14px);
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .faqs-list, .users-list, .users-container {
+            display: grid;
+            gap: 15px;
+        }
+
+        .faq-item, .user-item {
+            background: white;
+            padding: clamp(15px, 2vw, 20px);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .faq-item h3, .user-name {
+            margin-bottom: 10px;
+            color: #333;
+            font-size: clamp(14px, 2.5vw, 16px);
+        }
+
+        .user-item {
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .user-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .users-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .users-list {
+            width: 100%;
+            min-height: 300px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .user-chat-container {
+            width: 100%;
+            background: white;
+            border-radius: 8px;
+            padding: clamp(15px, 2vw, 20px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .chat-messages-admin {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+
+        .chat-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f5f7fa;
+            border-radius: 4px;
+            font-size: clamp(12px, 2vw, 14px);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: clamp(15px, 2vw, 20px);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            color: #666;
+            font-size: clamp(12px, 2vw, 14px);
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: clamp(24px, 5vw, 32px);
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .category-breakdown {
+            background: white;
+            padding: clamp(15px, 2vw, 20px);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .category-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            font-size: clamp(12px, 2vw, 14px);
+        }
+
+        .category-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .admin-container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                padding: 10px;
+                flex-direction: row;
+                overflow-x: auto;
+                overflow-y: visible;
+            }
+
+            .sidebar-header h2 {
+                margin-bottom: 0;
+                min-width: 100px;
+            }
+
+            .sidebar-nav {
+                flex-direction: row;
+                gap: 5px;
+                flex: 1;
+                overflow-x: auto;
+                padding: 0 10px;
+            }
+
+            .nav-item {
+                padding: 8px 10px;
+                min-width: max-content;
+            }
+
+            .main-content {
+                padding: clamp(10px, 2vw, 20px);
+            }
+
+            .users-container {
+                flex-direction: column;
+            }
+
+            .users-list, .user-chat-container {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                flex-wrap: wrap;
+            }
+
+            .sidebar-nav {
+                width: 100%;
+                flex-direction: row;
+                gap: 5px;
+                justify-content: flex-start;
+            }
+
+            .main-content {
+                padding: 10px;
+            }
+
+            .tab-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .tab-header h1 {
+                width: 100%;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+                gap: 10px;
+            }
+
+            .btn-primary, .btn-secondary, .btn-success, .btn-danger {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="admin-style.css">
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>Admin Panel</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-tab="faqs">📚 Manage FAQs</button>
+                <button class="nav-item" data-tab="users">👥 Users & Chats</button>
+                <button class="nav-item" data-tab="escalations">🚨 Escalations</button>
+                <button class="nav-item" data-tab="history">💬 Chat History</button>
+                <button class="nav-item" data-tab="stats">📊 Statistics</button>
+                <button class="nav-item" style="margin-top: auto; background: #ff6b6b; color: white;" id="logoutBtn">🚪 Logout</button>
+            </nav>
+        </div>
+
+        <div class="main-content">
+            <!-- FAQs Tab -->
+            <div class="tab-content active" id="faqs-tab">
+                <div class="tab-header">
+                    <h1>Manage FAQs</h1>
+                    <button class="btn-primary" id="addFaqBtn">+ Add New FAQ</button>
+                </div>
+
+                <!-- Add/Edit FAQ Form -->
+                <div class="form-container" id="addFaqForm" style="display: none;">
+                    <h3>Add New FAQ</h3>
+                    <form id="faqForm">
+                        <div class="form-group">
+                            <label>Question:</label>
+                            <input type="text" id="faqQuestion" placeholder="e.g., How do I track my order?" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Answer:</label>
+                            <textarea id="faqAnswer" placeholder="e.g., You can track your order by..." required rows="4"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Category:</label>
+                            <select id="faqCategory" required>
+                                <option value="">Select Category</option>
+                                <option value="track">Track Order</option>
+                                <option value="return">Return Policy</option>
+                                <option value="tech">Technical Support</option>
+                                <option value="sales">Sales</option>
+                                <option value="refresh">Refresh</option>
+                            </select>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn-success">Save FAQ</button>
+                            <button type="button" class="btn-secondary" id="cancelBtn">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- FAQs List -->
+                <div class="faqs-list" id="faqsList">
+                    <p>Loading FAQs...</p>
+                </div>
+            </div>
+
+            <!-- Users & Chats Tab -->
+            <div class="tab-content" id="users-tab">
+                <div class="tab-header">
+                    <h1>Users & Their Chats</h1>
+                </div>
+
+                <div class="users-container">
+                    <div class="users-list" id="usersList">
+                        <p>Loading users...</p>
+                    </div>
+                    <div class="user-chat-container" id="userChatContainer" style="display: none;">
+                        <div class="tab-header" style="border-bottom: 1px solid #eee; padding-bottom: 15px;">
+                            <h2 id="selectedUserName">User Chat</h2>
+                            <div style="display: flex; gap: 10px;">
+                                <button class="btn-danger" id="deleteUserChatBtn">🗑️ Delete User Chats</button>
+                                <button class="btn-secondary" id="backToUsersList">← Back to Users</button>
+                            </div>
+                        </div>
+                        <div class="chat-messages-admin" id="chatMessagesAdmin">
+                            <p>Loading chat...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat History Tab -->
+            <div class="tab-content" id="history-tab">
+                <div class="tab-header">
+                    <h1>Chat History</h1>
+                    <button class="btn-danger" id="clearHistoryBtn">🗑️ Clear History</button>
+                </div>
+
+                <div class="chat-history-container" id="chatHistoryContainer">
+                    <p>Loading chat history...</p>
+                </div>
+            </div>
+
+            <!-- Statistics Tab -->
+            <div class="tab-content" id="stats-tab">
+                <div class="tab-header">
+                    <h1>Statistics</h1>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total FAQs</h3>
+                        <p class="stat-value" id="totalFaqs">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Messages</h3>
+                        <p class="stat-value" id="totalMessages">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Categories</h3>
+                        <p class="stat-value" id="totalCategories">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Most Common Category</h3>
+                        <p class="stat-value" id="commonCategory">-</p>
+                    </div>
+                </div>
+
+                <div class="category-breakdown">
+                    <h3>FAQ Categories</h3>
+                    <div id="categoryStats"></div>
+                </div>
+            </div>
+
+            <!-- Escalations Tab -->
+            <div class="tab-content" id="escalations-tab">
+                <div class="tab-header">
+                    <h1>Active Escalations</h1>
+                    <button class="btn-secondary" id="refreshEscalations">🔄 Refresh</button>
+                </div>
+
+                <div class="users-container">
+                    <div class="users-list" id="escalationsList">
+                        <p>Loading escalations...</p>
+                    </div>
+                    <div class="user-chat-container" id="escalationChatContainer" style="display: none;">
+                        <div class="tab-header" style="border-bottom: 1px solid #eee; padding-bottom: 15px;">
+                            <h2 id="selectedEscalationId">Escalation #0</h2>
+                            <button class="btn-secondary" id="backToEscalations">← Back</button>
+                        </div>
+                        <div style="padding:15px;">
+                            <p><strong>User:</strong> <span id="escalationUserName"></span></p>
+                            <p><strong>Status:</strong> <span id="escalationStatus"></span></p>
+                            <p><strong>Started:</strong> <span id="escalationDate"></span></p>
+                        </div>
+                        
+                        <div id="escalationMessagesContainer" style="
+                            max-height:400px;
+                            overflow-y:auto;
+                            padding:15px;
+                            background:#f5f7fa;
+                            border-top:1px solid #ddd;
+                            border-bottom:1px solid #ddd;
+                        "></div>
+                        
+                        <div style="
+                            padding:15px;
+                            display:flex;
+                            gap:10px;
+                        ">
+                            <input type="text" id="adminEscalationInput" placeholder="Type your message..." style="
+                                flex:1;
+                                padding:10px;
+                                border:1px solid #ddd;
+                                border-radius:4px;
+                                font-size:14px;
+                            ">
+                            <button id="adminEscalationSendBtn" type="button" class="btn-primary">Send</button>
+                        </div>
+                        
+                        <div style="padding:15px; text-align:right;">
+                            <button id="completeEscalationBtn" type="button" class="btn-success">✓ Mark as Resolved</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.js"></script>
+    <script src="admin-script.js"></script>
+</body>
+</html>
