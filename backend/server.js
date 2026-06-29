@@ -15,7 +15,7 @@ const io = new Server(server, {
         methods: ['GET', 'POST']
     }
 });
-const PORT = 5500;
+const PORT = process.env.PORT || 5500;
 
 // Store active socket connections
 const userSockets = {}; // userId -> socket.id
@@ -26,23 +26,23 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // Serve static files
-app.use(express.static(path.join(__dirname, '../chatbot')));
+app.use(express.static(path.join(__dirname, '../frontend')));
 app.use(express.static(path.join(__dirname)));
 app.use('/admin', express.static(path.join(__dirname)));
 
 // Serve index.html
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../chatbot/index.html'));
+    res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
 // Auth page
 app.get('/auth', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../chatbot/auth.html'));
+    res.sendFile(path.resolve(__dirname, '../frontend/auth.html'));
 });
 
 // Catch-all for auth.html static file
 app.get('/auth.html', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../chatbot/auth.html'));
+    res.sendFile(path.resolve(__dirname, '../frontend/auth.html'));
 });
 
 // Admin panel
