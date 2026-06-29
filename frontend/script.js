@@ -51,7 +51,7 @@ window.onload = () => {
 
 // Initialize Socket.io
 function initializeSocket() {
-    socket = io('http://localhost:5500');
+    socket = io('http://https://chatbot-backend-h4cw.onrender.com');
     
     socket.on('connect', () => {
         console.log('Socket connected:', socket.id);
@@ -93,7 +93,7 @@ if (endBtn) {
             if (quickOptions) quickOptions.classList.remove('hidden');
             
             // Delete chat history from backend
-            fetch(`http://localhost:5500/api/chat-history/${currentUserId}`, { method: 'DELETE' })
+            fetch(`http://https://chatbot-backend-h4cw.onrender.com/api/chat-history/${currentUserId}`, { method: 'DELETE' })
                 .then(r => {
                     if (!r.ok) {
                         console.error('Failed to clear chat history:', r.status);
@@ -108,7 +108,7 @@ if (endBtn) {
 
 // Load previous chat history
 function loadChatHistory() {
-    fetch(`http://localhost:5500/api/chat-history/${currentUserId}`)
+    fetch(`http://https://chatbot-backend-h4cw.onrender.com/api/chat-history/${currentUserId}`)
         .then(r => r.json())
         .then(data => {
             if (data.history && data.history.length > 0) {
@@ -189,7 +189,7 @@ function createEscalationTicket() {
     const lastUserMessage = Array.from(chatMessagesDiv.querySelectorAll('.user-message')).pop();
     const initialQuestion = lastUserMessage ? lastUserMessage.textContent : 'Customer needs assistance';
     
-    fetch('http://localhost:5500/api/escalations', {
+    fetch('http://https://chatbot-backend-h4cw.onrender.com/api/escalations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -205,7 +205,7 @@ function createEscalationTicket() {
             inEscalation = true;
             
             // Load existing escalation messages
-            fetch(`http://localhost:5500/api/escalations/${currentEscalationId}`)
+            fetch(`http://https://chatbot-backend-h4cw.onrender.com/api/escalations/${currentEscalationId}`)
                 .then(r => r.json())
                 .then(escalData => {
                     showEscalationChatPanel();
@@ -348,7 +348,7 @@ function sendMessage() {
     
     showTypingIndicator();
     
-    fetch('http://localhost:5500/api/chat', {
+    fetch('http://https://chatbot-backend-h4cw.onrender.com/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: message, userId: currentUserId })
@@ -458,7 +458,8 @@ closeHistory.onclick = () => {
 
 // LOAD HISTORY INTO PANEL
 function loadHistoryPanel() {
-    fetch('http://localhost:5500/api/chat-history')
+    fetch('http://  https://chatbot-backend-h4cw.onrender.com/api/chat-history/' + currentUserId)                  
+
         .then(res => res.json())
         .then(data => {
             historyContent.innerHTML = '';
